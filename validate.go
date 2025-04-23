@@ -1,3 +1,58 @@
 package main
 
-func validate_chirpy()
+import (
+	"encoding/json"
+	"net/http"
+)
+
+func ValidateChirpy(w http.ResponseWriter, r *http.Request) {
+	// Create struct to store request json
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	// Create struct to store the response json
+	type returnVals struct {
+		Valid bool `json:"valid"`
+	}
+
+	// Using decoder to decode the request body
+	decoder := json.NewDecoder(r.Body)
+
+	// creating instance of the parameters struct
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not decode parameter", err)
+		return
+	}
+
+	// Create validation rules
+
+	// Handle error if chirp length exceeds 140 characters
+	// if length >140 {
+		// Set Content-Type header
+		// w.Header().Set("Content-Type", "application/json")
+		// Set Response Code
+		// w.WriteHeader(400)
+		// Write struct to json body
+		// json.NewEncoder(w).Encode(map[string]string{"error": "Chirp is too long"})
+		// return
+	// }
+
+	// w.Header().Set("Content-Type", "application/json")
+	// w.WriteHeader(200)
+	// json.NewEncoder(w).Encode(map[string]bool{"valid": true})
+	// return
+
+	const maxChirpLength = 140
+	if len(params.Body) > 140 {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, returnVals{
+		Valid: true,
+	})
+
+}
