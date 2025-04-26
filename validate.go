@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func ValidateChirpy(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,7 @@ func ValidateChirpy(w http.ResponseWriter, r *http.Request) {
 
 	// Create struct to store the response json
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		Cleaned string `json:"cleaned_body"`
 	}
 
 	// Using decoder to decode the request body
@@ -52,7 +53,27 @@ func ValidateChirpy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
+		Cleaned: removeProfanity(params.Body),
 	})
 
+}
+
+func removeProfanity(msg string) string {
+	profane := map[string]bool{
+		"kerfuffle": true,
+		"sharbert": true,
+		"fornax": true,
+	}
+
+	words := strings.Split(msg, " ")
+	for i,w:= range words {
+		for p := range profane {
+			if strings.ToLower(w) == p {
+				words[i] = "****"
+				break
+			}
+		}
+	}
+	puremsg := strings.Join(words, " ")
+	return puremsg
 }

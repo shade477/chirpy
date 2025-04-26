@@ -1,11 +1,31 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
+	// _ means that it is imported but only for passive use
+	_ "github.com/lib/pq"
+	"github.com/shade477/servers/internal/database"
 )
 
 func main() {
+	//import .env file
+	godotenv.Load()
+	// load the db string
+	dbURL := os.Getenv("DB_URL")
+
+	//Connect to DB
+	db,err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Error: Unable to connect to db")
+	}
+
+	dbQueries := database.New(db)
+
 	// Assign constants for file path and port.
 	// fileroot is the directory that will be used to serve static files.
 	const fileroot = "."
@@ -26,6 +46,8 @@ func main() {
 	// This will likely hold handler methods and middleware logic for your API.
 	var apiCfg apiConfig
 
+	apiCfg.db = dbQueries
+	apiCfg.platform = os.Getenv("PLATFORM")
 
 	// Serve static files under the "/app/" route.
 	// - Strip "/app/" from the request path so files are resolved correctly.
@@ -48,6 +70,9 @@ func main() {
 
 	// Handle POST request to "/api/validate_chirp"
 	mux.HandleFunc("POST /api/validate_chirp", ValidateChirpy)
+
+	// Handle POST request to "/api/users"
+	mux.HandleFunc("POST /api/users", apiCfg.createUser)
 
 	// Print a log message showing the port the server is running on.
 	log.Printf("Server running on port: %s", port)
